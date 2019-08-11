@@ -47,7 +47,7 @@ echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
 	echo -ne "${gb}${bf}Configurar o Rclone️ para google drive? [y/n] [y]:${r}" ; read -i y INS1
 
 	if [ "$INS1" = "y" ]; then
-		echo -ne "${blf}Digite o nome do seu app [gdrive]:${r} " ; read -i y NAMEAPP
+		echo -ne "${blf}Digite o nome do seu app [gdrive]:${r} " ; read -i gdrive NAMEAPP
     	echo -ne "${blf}Digite o ID do Cliente:${r} " ; read IDCLIENT
     	echo -ne "${blf}Digite A Chave Secreta:${r} " ; read SECRETKEY
 
