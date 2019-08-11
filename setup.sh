@@ -42,7 +42,6 @@ echo -e "${gf}INSTALANDO WO-CLI...${r}"
         echo -e "${blf}Instalação do WO-CLI${r}   [${gb}${bb}FALHOU${r}]"
         echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
     fi
-clear
 
 	echo -ne "${gb}${bf} Configurar o Rclone️ para google drive? [y/n] [y]:${r}" ; read -i y INS1
 
