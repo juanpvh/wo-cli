@@ -15,7 +15,7 @@ r=`tput sgr0`     # r to defaults
 clear
 sleep 2
 
-echo -e "${gf}INSTALANDO RCLONE...${r}"
+echo -e "${gf}${bf}INSTALANDO RCLONE...${r}"
 {
 
 [ -e /usr/bin/rclone ] && echo "${gb}${bf} Rclone Existe ⚡️${r}" || bash <(curl https://rclone.org/install.sh)
@@ -29,7 +29,7 @@ echo -e "${gf}INSTALANDO RCLONE...${r}"
         echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
     fi
 
-echo -e "${gf}INSTALANDO WO-CLI...${r}"
+echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
 {
 
 [ -e /usr/local/bin/wo-cli ] && echo "${gb}${bf} wo-cli Existe ⚡️${r}" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
@@ -42,8 +42,9 @@ echo -e "${gf}INSTALANDO WO-CLI...${r}"
         echo -e "${blf}Instalação do WO-CLI${r}   [${gb}${bb}FALHOU${r}]"
         echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
     fi
-
-	echo -ne "${gb}${bf} Configurar o Rclone️ para google drive? [y/n] [y]:${r}" ; read -i y INS1
+	echo "${gb}${bf}Rclone e WO-CLI instalados${r}"
+	echo
+	echo -ne "${gb}${bf}Configurar o Rclone️ para google drive? [y/n] [y]:${r}" ; read -i y INS1
 
 	if [ "$INS1" = "y" ]; then
 		echo -ne "${blf}Digite o nome do seu app [gdrive]:${r} " ; read -i y NAMEAPP
