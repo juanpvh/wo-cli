@@ -39,6 +39,10 @@ r=`tput sgr0`     # r to defaults
 
 		else
 
-	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli && chmod +x /usr/local/bin/wo-cli
+	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh && chmod +x /usr/local/bin/wo-cli
 	echo "${gb}${bf} wo-cli Instalado ⚡️${r}"
 	fi
+
+	(crontab -l; echo "0 2 * * * /usr/local/bin/wo-cli -d 2> /dev/null 2>&1") | crontab -
+
+	rm -rf $HOME/setup.sh
