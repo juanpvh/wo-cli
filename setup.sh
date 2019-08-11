@@ -43,6 +43,6 @@ r=`tput sgr0`     # r to defaults
 	echo "${gb}${bf} wo-cli Instalado ⚡️${r}"
 	fi
 
-	(crontab -l; echo "0 2 * * * /usr/local/bin/wo-cli -d 2> /dev/null 2>&1") | crontab -
+	(crontab -l; echo "0 2 * * * /usr/local/bin/wo-cli -b 2> /dev/null 2>&1") | crontab -
 
 	rm -rf $HOME/setup.sh

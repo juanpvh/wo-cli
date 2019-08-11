@@ -56,23 +56,14 @@ RESTBAKUP=$(rclone lsl  $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE | head -n 1 
 ##################################
 
 _help() {
-    cat <<EOT
-    Usage: usage: wo-cli (sub-commands ...) {arguments ...}
 
-        One of the following commands are required:
-      * -b|--build <build>   : The 4-digit release printed on the DVD (required)
-      * -s|--server <server> : Use <server> for NCOA image (assumes Rsync mode)
-        And any combination of the following OPTIONS are optional:
-        -c|--clean           : Run the ncoa_clean.sh script prior to install
-        -f|--force           : Force the install regardless of current status
-                               (use this to restart a bad install)
-        -h|--help            : Print this help message.
-        -t|--test            : Run tests even if already installed
-        --notest             : Do not run tests
-        -v|--verbose         : Provide more feedback (may be given more than once)
-        -V|--version         : Display the program version and exit
-    * Required
-EOT
+echo "Usage: usage: wo-cli (sub-commands ...) {arguments ...}
+       -a <site name> 	: Backup de apenas um site.
+       -b				: Backup de todos os sites.
+       -c <site name>	: Restaura um site
+       -d				: Restaura todos os sites.
+       -u				: Update do script.
+	   -h				: Mostra as messagens de help."
     exit 3
 }
 
@@ -359,7 +350,7 @@ do
 		'd') multi-restore                    ;;
 		'u') update                           ;;	
 		'h') _help                            ;;
-		'?') echo 'Ocorreu um erro !!'; exit 1;;
+		'?') _help; exit 1;;
 	esac
 done
 #FIM
