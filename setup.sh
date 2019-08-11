@@ -31,6 +31,14 @@ r=`tput sgr0`     # r to defaults
 		rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local false scope drive.file
 	
 	else
-		echo -e "${blf}${wb} Para configurar manualmente sua app para backup \nuse: rclone config${r}"
+		echo -e "${blf}${wb} Para configurar manualmente sua app para backup \nUse: rclone config${r}"
 	fi
 	
+	if [ -e usr/local/bin/wo-cli ]; then
+		echo "${gb}${bf} wo-cli Existe ⚡️${r}"
+
+		else
+
+	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli && chmod +x /usr/local/bin/wo-cli
+	echo "${gb}${bf} wo-cli Instalado ⚡️${r}"
+	fi
