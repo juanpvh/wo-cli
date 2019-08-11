@@ -3,5 +3,5 @@
 ### Instalando:
 
 ```
-wget https://raw.githubusercontent.com/juanpvh/wo-cli/master/setup.sh | bash
+bash <(wget -O - wget https://raw.githubusercontent.com/juanpvh/wo-cli/master/setup.sh)
 ```

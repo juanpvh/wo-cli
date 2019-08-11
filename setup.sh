@@ -12,7 +12,8 @@ wb=`tput setab 7` # set background white
 wf=`tput setaf 7` # set foreground white
 r=`tput sgr0`     # r to defaults
 
-
+clear
+sleep 2
 	if [ -e /usr/bin/rclone ]; then
 		echo "${gb}${bf} Rclone Existe ⚡️${r}"
 		else
