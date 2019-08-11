@@ -14,7 +14,7 @@ r=`tput sgr0`     # r to defaults
 
 
 	if [ -e /usr/bin/rclone ]; then
-		echo "${gb}${bf} Rclone Instalado ⚡️${r}"
+		echo "${gb}${bf} Rclone Existe ⚡️${r}"
 		else
 		curl https://rclone.org/install.sh | sudo bash
 		[ -e /usr/bin/rclone ] && echo "${gb}${bf} Rclone Instalado com sucesso! ⚡️${r}" || echo "${gb}${bf} Rclone Não foi Instalado! ⚡️${r}"
