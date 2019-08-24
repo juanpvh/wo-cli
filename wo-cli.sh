@@ -96,10 +96,12 @@ for SITE in ${SITELIST[@]}; do
 		
 	rm -rf $BACKUPPATH/$SITE
 
-	echo "🔥 $SITE Backup Completo!"
+	echo "🔥 Backup do $SITE Enviado!"
 
 done
 }
+
+echo "🔥 Backup Completo de todos os sites!"
 
 
 OPTERR=0

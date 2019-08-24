@@ -28,3 +28,21 @@ echo "export RESTIC_PASSWORD=$PASSWORD" >> /etc/profile
 apt-get install restic
 
 restic init --repo /mnt/gdrive/restic
+
+echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
+{
+
+[ -e /usr/local/bin/wo-cli ] && echo "${gb}${bf} wo-cli Existe ⚡️${r}" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+ chmod +x /usr/local/bin/wo-cli
+} >> /tmp/registro.log 2>&1
+    if [ $? -eq 0 ]; then
+        echo -e "${blf}wo-cli Instalado com Sucesso!${r}   [${gb}${bb}OK${r}]"
+        echo ""
+    else
+        echo -e "${blf}Instalação do WO-CLI${r}   [${gb}${bb}FALHOU${r}]"
+        echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
+    fi
+
+(crontab -l; echo "0 2 * * * /usr/local/bin/wo-cli -b 2> /dev/null 2>&1") | crontab -
+
+rm -rf $HOME/install.sh
