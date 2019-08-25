@@ -14,7 +14,27 @@ r=`tput sgr0`     # r to defaults
 
 clear
 sleep 2
+FQDN=$(hosname -d)
+PASSWORD=$(openssl rand -base64 32)
+echo "export RESTIC_REPOSITORY=/BACKUPS/" >> /etc/profile
+echo "export RESTIC_PASSWORD=$PASSWORD" >> /etc/profile
+echo -e "${gf}${bf}INSTALANDO RESTIC...${r}"
+{
 
+[ -e /usr/local/bin/restic ] && echo "${gb}${bf} Restic Existe ⚡️${r}" || wget https://github.com/restic/restic/releases/download/v0.9.1/restic_0.9.1_linux_amd64.bz2
+bunzip2 restic*
+sudo cp restic* /usr/local/bin/restic
+sudo chmod a+x /usr/local/bin/restic
+
+} >> /tmp/registro.log 2>&1
+    if [ $? -eq 0 ]; then
+        echo -e "${blf}Restic Instalado com Sucesso!${r}   [${gb}${bb}OK${r}]"
+        echo ""
+    else
+        echo -e "${blf}Instalação do Restic${r}   [${gb}${bb}FALHOU${r}]"
+        echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
+    fi
+	
 echo -e "${gf}${bf}INSTALANDO RCLONE...${r}"
 {
 
@@ -28,6 +48,8 @@ echo -e "${gf}${bf}INSTALANDO RCLONE...${r}"
         echo -e "${blf}Instalação do Rclone${r}   [${gb}${bb}FALHOU${r}]"
         echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
     fi
+
+	
 
 echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
 {
@@ -60,7 +82,10 @@ echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
 		echo -e "${blf}${wb} Para configurar manualmente sua app para backup \nUse: rclone config${r}"
 	fi
 	
+	echo " Configurando Restic"
+	echo "Senha Gerada: $PASSWORD"
+	restic -r rclone:$NAMEAPP:BACKUPS/$FQDN init
 
-	(crontab -l; echo "0 2 * * * /usr/local/bin/wo-cli -b 2> /dev/null 2>&1") | crontab -
+	(crontab -l; echo "0 2 * * * bash /usr/local/bin/wo-cli -b 2> /dev/null 2>&1") | crontab -
 
 	rm -rf $HOME/setup.sh
