@@ -42,15 +42,14 @@ cd ~
 DAYSKEEP=30
 
 HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
-HOST=$(hostname)
-FQDN=$(hostname -d)
-BACKUPPATH=~/opt/backups
+HOST=$(hostname -f)
+BACKUPPATH=~/opt/backup
 DATE=$(date +"%Y-%m-%d")
 DAYSKEPT=$(date +"%Y-%m-%d" -d "-$DAYSKEEP days")
 SITELIST=$(ls -1L /var/www -I22222 -Ihtml)
 SITELISTREST=$(ls -1L $BACKUPPATH/)
 SITE_PATH=/var/www
-RESTBAKUP=$(rclone lsl  $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE | head -n 1 | awk '{print $2,$4}')
+RESTBAKUP=$(rclone lsl  $HOSTCLONE:BACKUPS/$HOST/$SITE | head -n 1 | awk '{print $2,$4}')
 
 ##################################
 # Fucoes
@@ -69,42 +68,46 @@ echo "Usage: usage: wo-cli (sub-commands ...) {arguments ...}
 }
 
 # Backup Single Site.
-backup-single()
+backup_single ()
 {
 	echo "——————————————————————————————————"
 	wo site list
 	echo "——————————————————————————————————"
 	echo -ne "👉  Insira o NOME DO SITE único para fazer backup. [E.g. site.tld]: " ; read SITE
 
-	if [ -e "$SITE_PATH/$SITE" ] ; then
+	echo -ne "👉  Site $SITE "
+
+	if [ -d "$SITE_PATH/$SITE" ] ; then
 
 	echo "⚡️ Backup do site: $SITE..."
 
-	mkdir -p $BACKUPPATH/"$SITE"/
+	mkdir -p $BACKUPPATH/$SITE
 
 	echo "⏲  Criando BD para Backup: $SITE..."
 
-	wp db export $SITE_PATH/$SITE/$SITE.sql --allow-root --path=$SITE_PATH/$SITE/htdocs
+	wp db repair $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs --allow-root
+	wp db optimize $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs --allow-root
+	wp db export $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs --allow-root
 
 	echo "⏲  Criando Arquivos para backup: $SITE..."
 
-	tar -czf $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $SITE_PATH/$SITE/
+	tar -I  -cf $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $SITE_PATH/$SITE/
 	rm $SITE_PATH/$SITE/$SITE.sql
+
+	echo "⏲  Upando os Arquivos e BD na Nuvem: $SITE..."
+
+	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:BACKUPS/$HOST/$SITE/
+
+	DELLSITE=$(rclone ls $HOSTCLONE:BACKUPS/$HOST/$SITE | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
+	if [ ! -f $DELLSITE ]; then		
+		rclone deletefile $HOSTCLONE:BACKUPS/$HOST/$SITE/$DELLSITE.$SITE.sql.gz
+	fi
 
 	echo "⏲  Corrindo permissoes: $SITE..."
 
 	chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
 	find $SITE_PATH/$SITE/htdocs/ -type f -exec chmod 644 {} +
-	find $SITE_PATH/$SITE/htdocs/ -type d -exec chmod 755 {} +
-
-	echo "⏲  Upando os Arquivos e BD na Nuvem: $SITE..."
-
-	rclone copy $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/
-
-	DELLSITE=$(rclone ls $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
-	if [ ! -f $DELLSITE ]; then		
-		rclone deletefile $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/$DELLSITE.$SITE.sql.gz
-	fi
+	find $SITE_PATH/$SITE/htdocs/ -type d -exec chmod 755 {} +	
 
 	echo "🔥 $SITE Backup Completo!"
 
@@ -119,7 +122,7 @@ fi
 }
 
 # Backup All.
-backup-all()
+backup_all ()
 {
 
 for SITE in ${SITELIST[@]}; do
@@ -132,7 +135,7 @@ for SITE in ${SITELIST[@]}; do
 		fi		
 
 	echo "⏲  Criando BD para Backup: $SITE..."
-	
+
 	wp db repair $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs --allow-root
 	wp db optimize $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs --allow-root
 	wp db export $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs --allow-root
@@ -142,25 +145,38 @@ for SITE in ${SITELIST[@]}; do
 	tar -I pigz -cf $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $SITE_PATH/$SITE/
 	rm $SITE_PATH/$SITE/$SITE.sql
 
-	echo "⏲  Corrindo permissoes: $SITE..."
-		
-	chown -R www-data:www-data $SITESTORE/$SITE/htdocs/
-	find $SITE_PATH/$SITE/htdocs/ -type f -exec chmod 644 {} +
-	find $SITE_PATH/$SITE/htdocs/ -type d -exec chmod 755 {} +
 
 	echo "⏲  Upando os Arquivos e BD na Nuvem: $SITE..."
-	
-	restic -r rclone:$HOSTCLONE:BACKUPS:$FQDN/backups/$SITE backup -q $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz
-	
+
+	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:BACKUPS/$HOST/$SITE/
+
+	DELLSITE=$(rclone ls $HOSTCLONE:$HOSTCLONE:BACKUPS/$HOST/$SITE/ | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
+	if [ ! -f $DELLSITE ]; then		
+		rclone deletefile $HOSTCLONE:BACKUPS/$HOST/$SITE/$DELLSITE.$SITE.sql.gz
+	fi
+		
 	rm -rf $BACKUPPATH/$SITE
+
+	echo "⏲  Corrindo permissoes: $SITE..."
+		
+	chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
+	find $SITE_PATH/$SITE/htdocs/ -type f -exec chmod 644 {} +
+	find $SITE_PATH/$SITE/htdocs/ -type d -exec chmod 755 {} +	
 
 	echo "🔥 $SITE Backup Completo!"
 
 done
-}
+}  >> /tmp/registro.log 2>&1
+    if [ $? -eq 0 ]; then
+        echo -e "${blf}Backup Realizado de todos os sites!${r}   [${gb}${bb}OK${r}]"
+        echo ""
+    else
+        echo -e "${blf}Backup Realizado de todos os sites!${r}   [${gb}${bb}FALHOU${r}]"
+        echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
+    fi
 
 #single-restore
-single-restore() {
+single_restore () {
 
 	echo "——————————————————————————————————"
 	wo site list
@@ -169,101 +185,96 @@ single-restore() {
 	echo "——————————————————————————————————"
 
 	if [ -e "$SITE_PATH/$SITE" ] ; then
-		echo -ne "Por Padrao ira restaura o ultimo backup, escolha [ n ] para isso)!"
+		echo -ne "Por Padrao ira restaurat o ultimo backup realizado!"
 		echo -ne "Restaurar Backup de Datas Anteriores? [y,n]: " ; read -i n INS1
 
-	if [ "$INS1" = "n" ]; then
+	if [ "$INS1" = "y" ]; then
 
 		echo "⚡️  Listando Backups Existentes:"
 
-		rclone ls  $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/ | awk '{print $2}'
+		rclone ls  $HOSTCLONE:BACKUPS/$HOST/$SITE/ | awk '{print $2}'
 
 		echo -ne "Digite o Nome do Backup a ser Restaurado: " ; read -i y REST
 		echo "⚡️  Fazendo Download para Pasta Local..."
 
-		rclone copy $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/$REST $BACKUPPATH/$SITE/
+		rclone copy $HOSTCLONE:BACKUPS/$HOST/$SITE/$REST $BACKUPPATH/$SITE/
 
 		echo "⚡️  Download Realizado do site: $SITE ..."
-
-		#FAZENDO BACKUP DE SEGUNRANÇA DO SITE ATUAL ANTES DE RESTAURAR		
-		wp db export $SITE_PATH/$SITE/$SITE.sql --allow-root --path=$SITE_PATH/$SITE/htdocs
-		tar -czf $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $SITE_PATH/$SITE/
-		rm $SITE_PATH/$SITE/$SITE.sql
-		
-		echo "⏲  Removendo os arquivos do site atual e redefinindo o banco de dados..."
-		
-		rm -rf $SITESTORE/$SITE/htdocs
 
 		echo "⏲  Extraindo o backup..."
 		
 		tar -xzf $BACKUPPATH/$SITE/$REST -C $BACKUPPATH/$SITE/
 		rm -rf $BACKUPPATH/$SITE/$REST/{backup,conf,logs,wp-config.php}
 
+		#FAZENDO BACKUP DE SEGUNRANÇA DO SITE ATUAL ANTES DE RESTAURAR	
+		wp db export $SITE_PATH/$SITE/seg.$SITE.sql --allow-root --path=$SITE_PATH/$SITE/htdocs
+		tar -I -cf $BACKUPPATH/$SITE/seg.$SITE.tar.gz $SITE_PATH/$SITE/
+		rm $SITE_PATH/$SITE/$SITE.sql
+		
+		echo "⏲  Removendo os arquivos do site atual e redefinindo o banco de dados..."
+		
+		rm -rf $SITE_PATH/$SITE/htdocs
+
 		echo "Arquivos extraidos"
 		echo "⏲  Restaurando arquivos e  Banco de Dados.."
 
-		rsync -azh --info=progress2 --stats --human-readable $BACKUPPATH/$SITE/* $SITESTORE/$SITE
-
-		echo "⏲  Restaurando banco de dados..."
-
-		wp db reset --yes --allow-root --path=$SITESTORE/$SITE/htdocs/ 
-		wp db import $SITESTORE/$SITE/$SITE.sql --path=$SITESTORE/$SITE/htdocs/ --allow-root
+		rsync -azh --info=progress2 --stats --human-readable $BACKUPPATH/$SITE/htdocs $SITE_PATH/$SITE
+		wp db reset --yes --allow-root --path=$SITE_PATH/$SITE/htdocs/ 
+		wp db import $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs/ --allow-root		
 
 		echo "⏲  Fixando permissões..."
 
-		sudo chown -R www-data:www-data $SITESTORE/$SITE/htdocs/
-		sudo find $SITESTORE/$SITE_NAME/htdocs/ -type f -exec chmod 644 {} +
-		sudo find $SITESTORE/$SITE_NAME/htdocs/ -type d -exec chmod 755 {} +
+		sudo chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
+		sudo find $SITE_PATH/$SITE_NAME/htdocs/ -type f -exec chmod 644 {} +
+		sudo find $SITE_PATH/$SITE_NAME/htdocs/ -type d -exec chmod 755 {} +
 
 		echo "⏲  Limpando pasta local..."
 
-		rm -rfv $BACKUPPATH/$SITE
+		#rm -rf $BACKUPPATH/$SITE
 
 		echo "——————————————————————————————————"		
 		echo "🔥  $SITE Restaurado!"
 		echo "——————————————————————————————————"
 
 	else
-		ULTIMO=$(rclone ls  $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/ | head -n 1 | awk '{print $2}')
+		ULTIMO=$(rclone ls  $HOSTCLONE:BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
 
 		echo "⚡️  Fazendo Download para Pasta Local..."
 		echo
-		time rclone copy $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
+		time rclone copy $HOSTCLONE:BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
 		echo "⚡️  Download Realizado do site: $SITE ..."
 
 		#FAZENDO BACKUP DE SEGUNRANÇA DO SITE ATUAL ANTES DE RESTAURAR		
-		wp db export $SITE_PATH/$SITE/$SITE.sql --allow-root --path=$SITE_PATH/$SITE/htdocs
-		tar -czf $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $SITE_PATH/$SITE/
+		wp db export $SITE_PATH/$SITE/seg.$SITE.sql --allow-root --path=$SITE_PATH/$SITE/htdocs
+		tar -I pigz -cf $BACKUPPATH/$SITE/seg.$SITE.tar.gz $SITE_PATH/$SITE/
 		rm $SITE_PATH/$SITE/$SITE.sql
 		
 		echo "⏲  Removendo os arquivos do site atual..."
 
-		rm -rf $SITESTORE/$SITE/htdocs
+		rm -rf $SITE_PATH/$SITE/htdocs
 
 		echo "⏲  Extraindo o backup..."
 
-		tar -xzf $BACKUPPATH/$SITE/$RESTBACK -C $BACKUPPATH/$SITE/		
-		rm -rf $BACKUPPATH/$SITE/$RESTBACK/{backup,conf,logs,wp-config.php}
+		tar -xzf $BACKUPPATH/$SITE/$ULTIMO -C $BACKUPPATH/$SITE/		
+		rm -rf $BACKUPPATH/$SITE/$ULTIMO/{backup,conf,logs,wp-config.php}
 
 		echo "Arquivos extraidos"
-		echo "⏲  Restaurando arquivos..."
+		echo
+		echo "⏲  Restaurando arquivos e  Banco de Dados.."
 
-		rsync -azh --info=progress2 --stats --human-readable $BACKUPPATH/$SITE/* $SITESTORE/$SITE
-
-		echo "⏲  Restaurando banco de dados..."
-
-		wp db reset --yes --allow-root --path=$SITESTORE/$SITE/htdocs/ 
-		wp db import $SITESTORE/$SITE/$SITE.sql --path=$SITESTORE/$SITE/htdocs/ --allow-root
+		rsync -azh --info=progress2 --stats --human-readable $BACKUPPATH/$ULTIMO/htdocs $SITE_PATH/$SITE
+		wp db reset --yes --allow-root --path=$SITE_PATH/$SITE/htdocs/ 
+		wp db import $SITE_PATH/$ULTIMO/$SITE.sql --path=$SITE_PATH/$SITE/htdocs/ --allow-root
 
 		echo "⏲  Fixando permissões..."
 
-		sudo chown -R www-data:www-data $SITESTORE/$SITE/htdocs/
-		sudo find $SITESTORE/$SITE/htdocs/ -type f -exec chmod 644 {} +
-		sudo find $SITESTORE/$SITE/htdocs/ -type d -exec chmod 755 {} +
+		sudo chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
+		sudo find $SITE_PATH/$SITE/htdocs/ -type f -exec chmod 644 {} +
+		sudo find $SITE_PATH/$SITE/htdocs/ -type d -exec chmod 755 {} +
 
 		echo "⏲  Limpando pasta local..."
 
-		rm -rfv $BACKUPPATH/$SITE
+		rm -rf $BACKUPPATH/$SITE
 
 		echo "——————————————————————————————————"		
 		echo "🔥  $SITE Restaurado!"
@@ -276,49 +287,48 @@ fi
 }
 
 #single-restore
-multi-restore() {
+multi_restore() {
 
 # INCIANDO O LOOP.
-for SITE in ${SITELIST[@]}; do
+for SITE in ${SITELISTREST[@]}; do
 
-	ULTIMO=$(rclone ls  $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/ | head -n 1 | awk '{print $2}')
+	ULTIMO=$(rclone ls  $HOSTCLONE:BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
 
 	echo "⚡️  Fazendo Downloado site: $SITE para Pasta Local..."
-	time rclone copy $HOSTCLONE:BACKUP-SITES/SERVERS-$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
+	time rclone copy $HOSTCLONE:BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
 	echo "⚡️  Download Realizado do site: $SITE ..."
 	
 	#FAZENDO BACKUP DE SEGUNRANÇA DO SITE ATUAL ANTES DE RESTAURAR		
 	wp db export $SITE_PATH/$SITE/$SITE.sql --allow-root --path=$SITE_PATH/$SITE/htdocs
-	tar -czf $BACKUPPATH/$SITE/$DATE-$SITE.tar.gz $SITE_PATH/$SITE/
+	tar -I pigz -cf $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $SITE_PATH/$SITE/
 	rm $SITE_PATH/$SITE/$SITE.sql
 	
 	echo "⏲  Removendo os arquivos do site atual..."
 
-	rm -rf $SITESTORE/$SITE/htdocs
+	rm -rf $SITE_PATH/$SITE/htdocs
 
 	echo "⏲  Extraindo o backup..."
 
-	tar -xzf $BACKUPPATH/$SITE/$RESTBACK -C $BACKUPPATH/$SITE/		
-	rm -rf $BACKUPPATH/$SITE/$RESTBACK/{backup,conf,logs,wp-config.php}
+	tar -xzf $BACKUPPATH/$SITE/$ULTIMO -C $BACKUPPATH/$SITE/		
+	rm -rf $BACKUPPATH/$SITE/$ULTIMO/{backup,conf,logs,wp-config.php}
 
 	echo "Arquivos extraidos"
-	echo "⏲  Restaurando arquivos..."
+	echo
+	echo "⏲  Restaurando arquivos e  Banco de Dados.."
 
-	rsync -azh --info=progress2 --stats --human-readable $BACKUPPATH/$SITE/* $SITESTORE/$SITE
-	echo "⏲  Restaurando banco de dados..."
-
-	wp db reset --yes --allow-root --path=$SITESTORE/$SITE/htdocs/ 
-	wp db import $SITESTORE/$SITE/$SITE.sql --path=$SITESTORE/$SITE/htdocs/ --allow-root
+	rsync -azh --info=progress2 --stats --human-readable $BACKUPPATH/$SITE/htdocs $SITE_PATH/$SITE
+	wp db reset --yes --allow-root --path=$SITE_PATH/$SITE/htdocs/ 
+	wp db import $SITE_PATH/$SITE/$SITE.sql --path=$SITE_PATH/$SITE/htdocs/ --allow-root
 
 	echo "⏲  Fixando permissões..."
 
-	sudo chown -R www-data:www-data $SITESTORE/$SITE/htdocs/
-	sudo find $SITESTORE/$SITE/htdocs/ -type f -exec chmod 644 {} +
-	sudo find $SITESTORE/$SITE/htdocs/ -type d -exec chmod 755 {} +
+	sudo chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
+	sudo find $SITE_PATH/$SITE/htdocs/ -type f -exec chmod 644 {} +
+	sudo find $SITE_PATH/$SITE/htdocs/ -type d -exec chmod 755 {} +
 
 	echo "⏲  Limpando pasta local..."
 
-	rm -rfv $BACKUPPATH/$SITE
+	rm -rf $BACKUPPATH/$SITE
 
 	echo "——————————————————————————————————"		
 	echo "🔥  $SITE Restaurado!"
@@ -340,12 +350,12 @@ do
 ###
 	case $OPTION in
 		#executando as funções
-		'a') SITE_NAME="$OPTARG" 
-			 single-backup	                  ;;
-		'b') all-backup		                  ;;
+		'a') SITE="$OPTARG" 
+			 single_backup	                  ;;
+		'b') backup_all		                  ;;
 		'c') SITE_NAME="$OPTARG" 
-			 single-restore                   ;;
-		'd') multi-restore                    ;;
+			 single_restore                   ;;
+		'd') multi_restore                    ;;
 		'u') update                           ;;	
 		'h') _help                            ;;
 		'?') _help; exit 1;;
