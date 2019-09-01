@@ -40,7 +40,7 @@ cd ~
 ##################################
 #quantidade de dias para manter o backup
 DAYSKEEP=30
-
+BACKUPS="X"
 HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
 HOST=$(hostname -f)
 BACKUPPATH=~/opt/backup
@@ -49,7 +49,7 @@ DAYSKEPT=$(date +"%Y-%m-%d" -d "-$DAYSKEEP days")
 SITELIST=$(ls -1L /var/www -I22222 -Ihtml)
 SITELISTREST=$(ls -1L $BACKUPPATH/)
 SITE_PATH=/var/www
-RESTBAKUP=$(rclone lsl  $HOSTCLONE:BACKUPS/$HOST/$SITE | head -n 1 | awk '{print $2,$4}')
+RESTBAKUP=$(rclone lsl  $HOSTCLONE:$BACKUPS/$HOST/$SITE | head -n 1 | awk '{print $2,$4}')
 
 ##################################
 # Fucoes
@@ -96,11 +96,11 @@ backup_single ()
 
 	echo "⏲  Upando os Arquivos e BD na Nuvem: $SITE..."
 
-	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:BACKUPS/$HOST/$SITE/
+	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS/$HOST/$SITE/
 
-	DELLSITE=$(rclone ls $HOSTCLONE:BACKUPS/$HOST/$SITE | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
+	DELLSITE=$(rclone ls $HOSTCLONE:$BACKUPS/$HOST/$SITE | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
 	if [ ! -f $DELLSITE ]; then		
-		rclone deletefile $HOSTCLONE:BACKUPS/$HOST/$SITE/$DELLSITE.$SITE.sql.gz
+		rclone deletefile $HOSTCLONE:$BACKUPS/$HOST/$SITE/$DELLSITE.$SITE.sql.gz
 	fi
 
 	echo "⏲  Corrindo permissoes: $SITE..."
@@ -148,11 +148,11 @@ for SITE in ${SITELIST[@]}; do
 
 	echo "⏲  Upando os Arquivos e BD na Nuvem: $SITE..."
 
-	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:BACKUPS/$HOST/$SITE/
+	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS/$HOST/$SITE/
 
-	DELLSITE=$(rclone ls $HOSTCLONE:$HOSTCLONE:BACKUPS/$HOST/$SITE/ | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
+	DELLSITE=$(rclone ls $HOSTCLONE:$HOSTCLONE:$BACKUPS/$HOST/$SITE/ | grep -E $DAYSKEPT.$SITE.tar.gz | awk '{print $2}')
 	if [ ! -f $DELLSITE ]; then		
-		rclone deletefile $HOSTCLONE:BACKUPS/$HOST/$SITE/$DELLSITE.$SITE.sql.gz
+		rclone deletefile $HOSTCLONE:$BACKUPS/$HOST/$SITE/$DELLSITE.$SITE.sql.gz
 	fi
 		
 	rm -rf $BACKUPPATH/$SITE
@@ -192,12 +192,12 @@ single_restore () {
 
 		echo "⚡️  Listando Backups Existentes:"
 
-		rclone ls  $HOSTCLONE:BACKUPS/$HOST/$SITE/ | awk '{print $2}'
+		rclone ls  $HOSTCLONE:$BACKUPS/$HOST/$SITE/ | awk '{print $2}'
 
 		echo -ne "Digite o Nome do Backup a ser Restaurado: " ; read -i y REST
 		echo "⚡️  Fazendo Download para Pasta Local..."
 
-		rclone copy $HOSTCLONE:BACKUPS/$HOST/$SITE/$REST $BACKUPPATH/$SITE/
+		rclone copy $HOSTCLONE:$BACKUPS/$HOST/$SITE/$REST $BACKUPPATH/$SITE/
 
 		echo "⚡️  Download Realizado do site: $SITE ..."
 
@@ -237,11 +237,11 @@ single_restore () {
 		echo "——————————————————————————————————"
 
 	else
-		ULTIMO=$(rclone ls  $HOSTCLONE:BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
+		ULTIMO=$(rclone ls  $HOSTCLONE:$BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
 
 		echo "⚡️  Fazendo Download para Pasta Local..."
 		echo
-		time rclone copy $HOSTCLONE:BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
+		time rclone copy $HOSTCLONE:$BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
 		echo "⚡️  Download Realizado do site: $SITE ..."
 
 		#FAZENDO BACKUP DE SEGUNRANÇA DO SITE ATUAL ANTES DE RESTAURAR		
@@ -295,7 +295,7 @@ for SITE in ${SITELISTREST[@]}; do
 	ULTIMO=$(rclone ls  $HOSTCLONE:BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
 
 	echo "⚡️  Fazendo Downloado site: $SITE para Pasta Local..."
-	time rclone copy $HOSTCLONE:BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
+	time rclone copy $HOSTCLONE:$BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
 	echo "⚡️  Download Realizado do site: $SITE ..."
 	
 	#FAZENDO BACKUP DE SEGUNRANÇA DO SITE ATUAL ANTES DE RESTAURAR		
