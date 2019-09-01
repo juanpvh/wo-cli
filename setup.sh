@@ -14,7 +14,7 @@ r=`tput sgr0`     # r to defaults
 
 clear
 sleep 2
-FQDN=$(hosname -d)
+FQDN=$(hostname -d)
 	
 echo -e "${gf}${bf}INSTALANDO RCLONE...${r}"
 {
