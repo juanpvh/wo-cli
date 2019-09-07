@@ -61,6 +61,6 @@ echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
 		echo -e "${blf}${wb} Para configurar manualmente sua app para backup \nUse: rclone config${r}"
 	fi
 	
-	(crontab -l; echo "0 2 * * * bash /usr/local/bin/wo-cli -b 2> /dev/null 2>&1") | crontab -
+	(crontab -l; echo "0 2 * * * bash /usr/local/bin/wo-cli -b >> /var/log/wo-cli.log 2>&1") | crontab -
 
 	rm -rf $HOME/setup.sh
