@@ -54,7 +54,7 @@ echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
 
 		echo -ne "${blf}Um lInk sera gerado, copie e cole no seu browser e sigua as intruções:${r} "
 
-		rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local false scope drive.file
+		rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local true scope drive.file
 
 	
 	else
