@@ -3,7 +3,6 @@
 
 clear
 sleep 2
-FQDN=$(hostname -d)
 	
 echo -e "INSTALANDO RCLONE..."
 {
@@ -19,7 +18,7 @@ echo -e "INSTALANDO RCLONE..."
         echo -e "Verifique o arquivo /tmp/registro.log"
     fi
 
-echo -e "$INSTALANDO WO-CLI.."
+echo -e "INSTALANDO WO-CLI.."
 {
 
 [ -e /usr/local/bin/wo-cli ] && echo "wo-cli Existe ⚡️" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
