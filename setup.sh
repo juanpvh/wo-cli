@@ -5,7 +5,7 @@ clear
 sleep 2
 	
 echo "INSTALANDO RCLONE..."
-    [ -e /usr/bin/rclone ] && echo "Rclone Existe ⚡️" || bash <(curl https://rclone.org/install.sh)
+    [ -e /usr/bin/rclone ] && echo "Rclone Existe ⚡️" || curl https://rclone.org/install.sh | sudo bash
 
 echo "INSTALANDO WO-CLI.."
     [ -e /usr/local/bin/wo-cli ] && echo "wo-cli Existe ⚡️" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
