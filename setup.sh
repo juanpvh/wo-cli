@@ -1,64 +1,54 @@
 #!/usr/bin/env bash
 
-bb=`tput setab 0` #set background black
-bf=`tput setaf 0` #set foreground black
-gb=`tput setab 2` # set background green
-gf=`tput setab 2` # set background green
-blb=`tput setab 4` # set background blue
-blf=`tput setaf 4` # set foreground blue
-rb=`tput setab 1` # set background red
-rf=`tput setaf 1` # set foreground red
-wb=`tput setab 7` # set background white
-wf=`tput setaf 7` # set foreground white
-r=`tput sgr0`     # r to defaults
 
 clear
 sleep 2
 FQDN=$(hostname -d)
 	
-echo -e "${gf}${bf}INSTALANDO RCLONE...${r}"
+echo -e "INSTALANDO RCLONE..."
 {
 
-[ -e /usr/bin/rclone ] && echo "${gb}${bf} Rclone Existe ⚡️${r}" || bash <(curl https://rclone.org/install.sh)
+[ -e /usr/bin/rclone ] && echo "Rclone Existe ⚡️" || bash <(curl https://rclone.org/install.sh)
 
 } >> /tmp/registro.log 2>&1
     if [ $? -eq 0 ]; then
-        echo -e "${blf}Rclone Instalado com Sucesso!${r}   [${gb}${bb}OK${r}]"
+        echo -e "Rclone Instalado com Sucesso!   [OK]"
         echo ""
     else
-        echo -e "${blf}Instalação do Rclone${r}   [${gb}${bb}FALHOU${r}]"
-        echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
+        echo -e "Instalação do Rclone   [FALHOU]"
+        echo -e "Verifique o arquivo /tmp/registro.log"
     fi
 
-echo -e "${gf}${bf}INSTALANDO WO-CLI...${r}"
+echo -e "$INSTALANDO WO-CLI.."
 {
 
-[ -e /usr/local/bin/wo-cli ] && echo "${gb}${bf} wo-cli Existe ⚡️${r}" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+[ -e /usr/local/bin/wo-cli ] && echo "wo-cli Existe ⚡️" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
  chmod +x /usr/local/bin/wo-cli
 } >> /tmp/registro.log 2>&1
     if [ $? -eq 0 ]; then
-        echo -e "${blf}wo-cli Instalado com Sucesso!${r}   [${gb}${bb}OK${r}]"
+        echo -e "wo-cli Instalado com Sucesso!   [OK]"
         echo ""
     else
-        echo -e "${blf}Instalação do WO-CLI${r}   [${gb}${bb}FALHOU${r}]"
-        echo -e "${blf}Verifique o arquivo /tmp/registro.log${r}"
+        echo -e "Instalação do WO-CLI   [FALHOU]"
+        echo -e "Verifique o arquivo /tmp/registro.log"
     fi
-	echo "${gb}${bf}Rclone e WO-CLI instalados${r}"
+	echo "Rclone e WO-CLI instalados"
 	echo
-	echo -ne "${gb}${bf}Configurar o Rclone️ para google drive? [y/n] [y]:${r}" ; read -i y INS1
+	echo -ne "Configurar o Rclone️ para google drive? [y/n] [y]: "; read -i n INS1
 
 	if [ "$INS1" = "y" ]; then
-		echo -ne "${blf}Digite o nome do seu app [gdrive]:${r} " ; read -i gdrive NAMEAPP
-    	echo -ne "${blf}Digite o ID do Cliente:${r} " ; read IDCLIENT
-    	echo -ne "${blf}Digite A Chave Secreta:${r} " ; read SECRETKEY
+		echo -ne "Digite o nome do seu app [gdrive]: "; read -i gdrive NAMEAPP
+    	echo -ne "Digite o ID do Cliente: " ; read IDCLIENT
+    	echo -ne "Digite A Chave Secreta: " ; read SECRETKEY
 
-		echo -ne "${blf}Um lInk sera gerado, copie e cole no seu browser e sigua as intruções:${r} "
+		echo -ne "Um lInk sera gerado, copie e cole no seu browser e sigua as intruções:"
 
 		rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local false scope drive.file
 
 	
 	else
-		echo -e "${blf}${wb} Para configurar manualmente sua app para backup \nUse: rclone config${r}"
+		echo -e "Para configurar manualmente sua app para backup \nUse: rclone config"
+        echo ""
 	fi
 	
 	(crontab -l; echo "0 2 * * * bash /usr/local/bin/wo-cli -b >> /var/log/wo-cli.log 2>&1") | crontab -
