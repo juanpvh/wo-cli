@@ -29,7 +29,7 @@ cd ~
 ##################################
 #quantidade de dias para manter o backup
 DAYSKEEP=30
-BACKUPS=BKMARCOS
+BACKUPS=BK
 HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
 HOST=$(hostname -f)
 BACKUPPATH=/opt/BKSITES
