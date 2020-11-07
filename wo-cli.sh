@@ -28,7 +28,8 @@ cd ~
 # Variaveis Global
 ##################################
 #quantidade de dias para manter o backup
-DAYSKEEP=30
+VALORDAY=30
+DAYSKEEP="$(expr $VALORDAY + 1)"
 BACKUPS="$USER"
 HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
 HOST=$(hostname -f)
@@ -44,18 +45,17 @@ SITE_PATH=/var/www
 ##################################
 
 _help() {
-echo "Usage: usage: wo-cli (sub-commands ...) {arguments ...}
-    Usage: wo-cli (ARGUMENTS...)
+echo "Usage: wo-cli (ARGUMENTS...)
 	-a <site name> 	: Backup de apenas um site.
 	-b              : Backup de todos os sites.
 	-c <site name>  : Restaura um site
 	-d              : Restaura todos os sites.
-    -e              : Configura wo-cli
-    -i              : Configura o rclone e wo-cli # primeira etapa
+	-e              : Configura wo-cli
+	-i              : Configura o rclone e wo-cli # primeira etapa
 	-u              : Update do script.
 	-v              : Version
 	-h              : Mostra as messagens de help."
-    exit 1
+exit 1
 }
 
 #wo-cli config
@@ -63,7 +63,7 @@ _woconfig() {
 	echo -ne "Digite o Nome da Pasta Onde ficara os BackUps: " ; read DIR 
 	sed -i "s/BACKUPS=.*/BACKUPS=$DIR/" /usr/local/bin/wo-cli
 	echo -ne "Digite o valor em dias que ira manter os Backups: " ; read DAYBR 
-	sed -i "s/DAYSKEEP=.*/BACKUPS=$DAYBR/" /usr/local/bin/wo-cli
+	sed -i "s/VALORDAY=.*/BACKUPS=$DAYBR/" /usr/local/bin/wo-cli
 }
 
 #Config rclone
