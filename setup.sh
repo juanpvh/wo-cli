@@ -8,14 +8,19 @@ echo "INSTALANDO RCLONE..."
     [ -e /usr/bin/rclone ] && echo "Rclone Existe ⚡️" || curl https://rclone.org/install.sh | sudo bash
 
 echo "INSTALANDO WO-CLI.."
-    [ -e /usr/local/bin/wo-cli ] && echo "wo-cli Existe ⚡️" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
-	[ -e /usr/local/bin/wo-cli-var ] && echo "wo-cli-var Existe ⚡️" || wget -O /usr/local/bin/wo-cli-var https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli-var.sh
- chmod +x /usr/local/bin/wo-cli
- chmod +x /usr/local/bin/wo-cli-var
+    if [ -e /usr/local/bin/wo-cli ]; then
+		rm -rf /usr/local/bin/wo-cli
+		wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+		chmod +x /usr/local/bin/wo-cli
+		else
+		wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+		chmod +x /usr/local/bin/wo-cli
+	fi
 
+	[ -e /usr/local/bin/wo-cli-var ] && echo "wo-cli-var Existe ⚡️" || wget -O /usr/local/bin/wo-cli-var https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli-var.sh
+	chmod +x /usr/local/bin/wo-cli-var
 
 echo "Rclone e WO-CLI instalados"
-
 
 (crontab -l; echo "0 2 * * * bash /usr/local/bin/wo-cli -b >> /var/log/wo-cli.log 2>&1") | crontab -
 
