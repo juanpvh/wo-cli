@@ -318,7 +318,7 @@ while getopts abcduhv OPTION; do
 	'b') backup_all;;
 	'c') restore-single;;
 	'd') restore-all;;
-	'u') update;;	
+	'u') _update;;	
 	'h') _help;;
 	'v') echo "wo-cli 1.1.0 - (C) 2019-2020 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
