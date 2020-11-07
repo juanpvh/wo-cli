@@ -324,7 +324,7 @@ while getopts abcdeiuhv OPTION; do
 	'i') _rcloneconfig;;
 	'h') _help;;
 	'u') _update;;
-	'v') echo "wo-cli 1.1.0 - (C) 2019-2020 juanpvh"; exit 1;;
+	'v') echo "wo-cli 1.1.1 - (C) 2019-2020 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
 	esac
 done
