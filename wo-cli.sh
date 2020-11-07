@@ -79,6 +79,7 @@ _update() {
 	mv /usr/local/bin/wo-cli /usr/local/bin/wo-cli-old
     wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
     chmod +x /usr/local/bin/wo-cli
+	echo "👉  Update Concluido!!! "
 }
 
 
