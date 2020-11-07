@@ -45,40 +45,47 @@ SITE_PATH=/var/www
 
 _help() {
 echo "Usage: usage: wo-cli (sub-commands ...) {arguments ...}
+    Usage: wo-cli (ARGUMENTS...)
 	-a <site name> 	: Backup de apenas um site.
 	-b              : Backup de todos os sites.
 	-c <site name>  : Restaura um site
 	-d              : Restaura todos os sites.
+    -e              : Configura wo-cli
+    -i              : Configura o rclone e wo-cli # primeira etapa
 	-u              : Update do script.
 	-v              : Version
-	-i              : Configura o rclone e wo-cli # primeira etapa
 	-h              : Mostra as messagens de help."
     exit 1
 }
 
+#wo-cli config
+_woconfig() {
+	echo -ne "Digite o Nome da Pasta Onde ficara os BackUps: " ; read DIR 
+	sed -i "s/BACKUPS=.*/BACKUPS=$DIR/" /usr/local/bin/wo-cli
+	echo -ne "Digite o valor em dias que ira manter os Backups: " ; read DAYBR 
+	sed -i "s/DAYSKEEP=.*/BACKUPS=$DAYBR/" /usr/local/bin/wo-cli
+}
+
 #Config rclone
-
 _rcloneconfig() {
-echo -ne "Configurar o Rclone️ para google drive? [y/n] [y]: "; read -i n INS1
-	if [ "$INS1" = "y" ]; then
-		echo -ne "Digite o nome do seu app [gdrive]: "; read -i gdrive NAMEAPP
-    	echo -ne "Digite o ID do Cliente: " ; read IDCLIENT
-    	echo -ne "Digite A Chave Secreta: " ; read SECRETKEY
-
-		echo "Um lInk sera gerado, copie e cole no seu browser e sigua as intruções:"
-
-		rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local false scope drive.file
+echo -ne "Configurar o Rclone️ para google drive! [y/n] [y]: "; read -i y INS1
+if [ "$INS1" = "y" ]; then
+	echo -ne "Digite o nome do seu app [gdrive]: "; read -i gdrive NAMEAPP
+	echo -ne "Digite o ID do Cliente: " ; read IDCLIENT
+	echo -ne "Digite A Chave Secreta: " ; read SECRETKEY
+	echo "Um lInk sera gerado, copie e cole no seu browser e sigua as intruções:"
+	rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local false scope drive.file
 	else
-		echo "Para configurar manualmente sua app para backup \nUse: rclone config"
-        echo ""
-	fi
+	echo "Para configurar manualmente sua app para backup \nUse: rclone config"
+	echo ""
+fi
 }
 #update
 _update() {
 	echo "Fazendo Update do wo-cli..."
 	mv /usr/local/bin/wo-cli /usr/local/bin/wo-cli-old
-    wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
-    chmod +x /usr/local/bin/wo-cli
+	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+	chmod +x /usr/local/bin/wo-cli
 	echo "👉  Update Concluido!!! "
 }
 
@@ -86,7 +93,7 @@ _update() {
 #Deletanando arquivos antigos
 old_arquivos() {
 	echo "👉  Deletando arquivos com mais de 30 dias..."
-	rclone --min-age 30d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS/$HOST/$SITE/
+	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS/$HOST/$SITE/
 }
 
 # Backup Single Site.
@@ -336,9 +343,10 @@ while getopts abcduhv OPTION; do
 	'b') backup_all;;
 	'c') restore-single;;
 	'd') restore-all;;
-	'u') _update;;	
-	'h') _help;;
+	'e') _woconfig;;
 	'i') _rcloneconfig;;
+	'h') _help;;
+	'u') _update;;
 	'v') echo "wo-cli 1.1.0 - (C) 2019-2020 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
 	esac
