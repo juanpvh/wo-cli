@@ -29,7 +29,7 @@ cd ~
 ##################################
 #quantidade de dias para manter o backup
 DAYSKEEP=30
-BACKUPS=UPMARCOS
+BACKUPS="$USER"
 HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
 HOST=$(hostname -f)
 BACKUPPATH=/opt/BKSITES
@@ -51,11 +51,28 @@ echo "Usage: usage: wo-cli (sub-commands ...) {arguments ...}
 	-d              : Restaura todos os sites.
 	-u              : Update do script.
 	-v              : Version
+	-i              : Configura o rclone e wo-cli # primeira etapa
 	-h              : Mostra as messagens de help."
     exit 1
 }
 
+#Config rclone
 
+_rcloneconfig() {
+echo -ne "Configurar o Rclone️ para google drive? [y/n] [y]: "; read -i n INS1
+	if [ "$INS1" = "y" ]; then
+		echo -ne "Digite o nome do seu app [gdrive]: "; read -i gdrive NAMEAPP
+    	echo -ne "Digite o ID do Cliente: " ; read IDCLIENT
+    	echo -ne "Digite A Chave Secreta: " ; read SECRETKEY
+
+		echo "Um lInk sera gerado, copie e cole no seu browser e sigua as intruções:"
+
+		rclone config create $NAMEAPP drive cliente_id $IDCLIENT client_secret $SECRETKEY config_is_local false scope drive.file
+	else
+		echo "Para configurar manualmente sua app para backup \nUse: rclone config"
+        echo ""
+	fi
+}
 #update
 _update() {
 	echo "Fazendo Update do wo-cli..."
@@ -96,7 +113,7 @@ backup_single() {
 	echo "👉  Upando os Arquivos e BD na Nuvem: $SITE..."
 	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS/$HOST/$SITE/
 
-	echo "👉  Deletando arquivos antigos com mais de 30 dias..."
+	#deletando arquivos antigos de backup
 	old_arquivos
 	
 	echo "👉  Corrigindo permissoes: $SITE..."		
@@ -151,7 +168,7 @@ for SITE in ${SITELIST[@]}; do
 	echo "🔥 Sucesso, Arquivo enviado para Nuvem!"
 	fi
 
-	echo "👉  Deletando arquivos antigos com mais de 30 dias..."
+	#deletando arquivos antigos de backup
 	old_arquivos
 	
 	echo "👉  Corrigindo permissoes: $SITE..."		
@@ -320,6 +337,7 @@ while getopts abcduhv OPTION; do
 	'd') restore-all;;
 	'u') _update;;	
 	'h') _help;;
+	'i') _rcloneconfig;;
 	'v') echo "wo-cli 1.1.0 - (C) 2019-2020 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
 	esac
