@@ -12,7 +12,7 @@
 # -------------------------------------------------------------------------
 
 ###subindo variaveis
-source /usr/local/bin/wo-cli-var.sh
+source /usr/local/bin/wo-cli-var
 
 #clear
 cd ~
