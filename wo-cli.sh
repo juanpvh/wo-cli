@@ -51,7 +51,7 @@ echo "Usage: wo-cli (ARGUMENTS...)
 	-c <site name>  : Restaura um site
 	-d              : Restaura todos os sites.
 	-e              : Configura wo-cli
-	-i              : Configura o rclone e wo-cli # primeira etapa
+	-i              : Configura o rclone para google-drive # primeira etapa
 	-u              : Update do script.
 	-v              : Version
 	-h              : Mostra as messagens de help."
@@ -63,7 +63,7 @@ _woconfig() {
 	echo -ne "Digite o Nome da Pasta Onde ficara os BackUps: " ; read DIR 
 	sed -i "s/BACKUPS=.*/BACKUPS=$DIR/" /usr/local/bin/wo-cli
 	echo -ne "Digite o valor em dias que ira manter os Backups: " ; read DAYBR 
-	sed -i "s/VALORDAY=.*/BACKUPS=$DAYBR/" /usr/local/bin/wo-cli
+	sed -i "s/VALORDAY=.*/VALORDAY=$DAYBR/" /usr/local/bin/wo-cli
 }
 
 #Config rclone
@@ -335,7 +335,7 @@ done
 
 ###
 OPTERR=0
-while getopts abcduhv OPTION; do
+while getopts abcdeiuhv OPTION; do
 	###
 	case $OPTION in
 	#executando as funções

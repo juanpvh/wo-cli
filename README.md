@@ -36,21 +36,26 @@ $ bash <(curl https://raw.githubusercontent.com/juanpvh/wo-cli/master/setup.sh)
 ```
 
 ### Configuração
-
+Configura o wo-cli
 ```sh
-$ wo-cli -g
+$ wo-cli -e 
+```
+Configura o rclone + google drive
+```sh
+$ wo-cli -i
 ```
 
-Dillinger is currently extended with the following plugins. Instructions on how to use them in your own application are linked below.
+Informações:
+
 
 | Time | README |
 | ------ | ------ |
-| crontab | [plugins/dropbox/README.md][PlDb] |
-| GitHub | [plugins/github/README.md][PlGh] |
-| Google Drive | [plugins/googledrive/README.md][PlGd] |
-| OneDrive | [plugins/onedrive/README.md][PlOd] |
-| Medium | [plugins/medium/README.md][PlMe] |
-| Google Analytics | [plugins/googleanalytics/README.md][PlGa] |
+| crontab | backup realizado sempre as 2:00am|
+
+```sh
+$ 0 2 * * * bash /usr/local/bin/wo-cli -b >> /var/log/wo-cli.log 2>&1
+```
+obs: a regra cron é aplicada na instalação
 
 ### Todos
 
