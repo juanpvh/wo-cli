@@ -9,7 +9,9 @@ echo "INSTALANDO RCLONE..."
 
 echo "INSTALANDO WO-CLI.."
     [ -e /usr/local/bin/wo-cli ] && echo "wo-cli Existe ⚡️" || wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+	[ -e /usr/local/bin/wo-cli-var ] && echo "wo-cli-var Existe ⚡️" || wget -O /usr/local/bin/wo-cli-var https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli-var.sh
  chmod +x /usr/local/bin/wo-cli
+ chmod +x /usr/local/bin/wo-cli-var
 
 
 echo "Rclone e WO-CLI instalados"

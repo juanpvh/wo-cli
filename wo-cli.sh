@@ -11,34 +11,11 @@
 # Version 1.0 - 2019-07-26
 # -------------------------------------------------------------------------
 
-# Colors.
-#
-# colors from tput
-# http://stackoverflow.com/a/20983251/950111
-# Usage:
-# echo "${redb}red text ${gb}green text${r}"
-gb=`tput setab 2` # set background green
-gf=`tput setaf 2` # set background green
-r=`tput sgr0`     # r to defaults
+###subindo variaveis
+source /usr/local/bin/wo-cli-var.sh
 
 #clear
 cd ~
-
-##################################
-# Variaveis Global
-##################################
-#quantidade de dias para manter o backup
-VALORDAY=30
-DAYSKEEP="$(expr $VALORDAY + 1)"
-BACKUPS="$USER"
-HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
-HOST=$(hostname -f)
-BACKUPPATH=/opt/BKSITES
-DATE=$(date +"%T"."%d-%m-%Y")
-SITELIST=$(ls -1L /var/www -I22222 -Ihtml)
-SITE_PATH=/var/www
-
-
 
 ##################################
 # Fucoes
@@ -61,9 +38,9 @@ exit 1
 #wo-cli config
 _woconfig() {
 	echo -ne "Digite o Nome da Pasta Onde ficara os BackUps: " ; read DIR 
-	sed -i "s/BACKUPS=.*/BACKUPS=$DIR/" /usr/local/bin/wo-cli
+	sed -i "s/BACKUPS=.*/BACKUPS=$DIR/" /usr/local/bin/wo-cli-var
 	echo -ne "Digite o valor em dias que ira manter os Backups: " ; read DAYBR 
-	sed -i "s/VALORDAY=.*/VALORDAY=$DAYBR/" /usr/local/bin/wo-cli
+	sed -i "s/VALORDAY=.*/VALORDAY=$DAYBR/" /usr/local/bin/wo-cli-var
 }
 
 #Config rclone
