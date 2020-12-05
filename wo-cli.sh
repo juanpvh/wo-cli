@@ -325,13 +325,13 @@ while getopts abcdeiuhv OPTION; do
 	#executando as funções
 	'a') backup_single;;
 	'b') backup_all;;
-	'c') restore-single;;
-	'd') restore-all;;
+	'c') restore_single;;
+	'd') restore_all;;
 	'e') _woconfig;;
 	'i') _rcloneconfig;;
 	'h') _help;;
 	'u') _update;;
-	'v') echo "wo-cli 1.1.1 - (C) 2019-2020 juanpvh"; exit 1;;
+	'v') echo "wo-cli 1.1.2 - (C) 2019-2020 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
 	esac
 done
