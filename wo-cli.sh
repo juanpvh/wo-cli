@@ -14,6 +14,15 @@
 ###subindo variaveis
 source /usr/local/bin/wo-cli-var
 
+###var
+
+HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
+HOST=$(hostname -f)
+BACKUPPATH=/opt/BKSITES
+DATE=$(date +"%d-%m-%Y"."%T")
+SITELIST=$(ls -1L /var/www -I22222 -Ihtml)
+SITE_PATH=/var/www
+
 #clear
 cd ~
 
@@ -57,6 +66,7 @@ if [ "$INS1" = "y" ]; then
 	echo ""
 fi
 }
+
 #update
 _update() {
 	echo "Fazendo Update do wo-cli..."
@@ -65,7 +75,6 @@ _update() {
 	chmod +x /usr/local/bin/wo-cli
 	echo "👉  Update Concluido!!! "
 }
-
 
 #Deletanando arquivos antigos
 old_arquivos() {
@@ -144,7 +153,9 @@ for SITE in ${SITELIST[@]}; do
 	cd $SITE_PATH/$SITE/
 	tar -I pigz -cf $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz .
 	rm $SITE_PATH/$SITE/$SITE.sql
-	if [ "$?" -eq "0" ]; then echo "🔥 Sucesso, Arquivo ZIP Criado!"; fi
+	if [ "$?" -eq "0" ]; then
+	echo "🔥 Sucesso, Arquivo ZIP Criado!"
+	fi
 
 	echo "👉  Upando os Arquivos e BD na Nuvem: $SITE..."
 	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS/$HOST/$SITE/
@@ -261,13 +272,10 @@ restore_single() {
 
 fi 
 fi
-
-
 }
 
 #MULTI-restore
 restore_all() {
-
 # INCIANDO O LOOP.
 for SITE in ${SITELIST[@]}; do
 	echo "⚡️  Iniciando Restauração do site: $SITE ..."
@@ -308,7 +316,6 @@ for SITE in ${SITELIST[@]}; do
 	echo "——————————————————————————————————"
 done
 }
-
 
 ###
 OPTERR=0

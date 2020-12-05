@@ -1,0 +1,7 @@
+ check process CROND with pidfile /var/run/crond.pid
+   group system
+   group crond
+   start program = "/etc/init.d/cron start"
+   stop  program = "/etc/init.d/cron stop"
+   if 5 restarts with 5 cycles then timeout
+

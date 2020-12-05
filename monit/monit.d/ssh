@@ -1,0 +1,15 @@
+## SSH monitoring.
+
+## Test the sshd service.
+check process SSHD with pidfile /run/sshd.pid
+  group ssh
+  start program = "/etc/init.d/ssh start"
+  stop  program = "/etc/init.d/ssh stop"
+  if failed port 4444 protocol ssh then restart
+  if changed pid then exec "/usr/local/bin/monit2telegram"
+  if cpu > 90% for 5 cycles then exec "/usr/local/bin/monit2telegram" else if succeeded then exec "/usr/local/bin/monit2telegram"
+  if 5 restarts within 5 cycles then timeout
+
+
+
+

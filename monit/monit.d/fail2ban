@@ -1,0 +1,8 @@
+check process FAIL2BAN with pidfile /var/run/fail2ban/fail2ban.pid
+  group services
+  start program = "/etc/init.d/fail2ban start"
+  stop  program = "/etc/init.d/fail2ban stop"
+  if failed unixsocket /var/run/fail2ban/fail2ban.sock then restart
+  if cpu is greater than 90% for 5 cycles then exec "/usr/local/bin/monit2telegram" else if succeeded then exec "/usr/local/bin/monit2telegram"
+  if cpu > 90% for 5 cycles then exec "wo stack restart" 
+  if 4 restarts with 5 cycles then timeout

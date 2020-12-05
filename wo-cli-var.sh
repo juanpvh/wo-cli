@@ -29,9 +29,4 @@ r=`tput sgr0`     # r to defaults
 VALORDAY=30
 DAYSKEEP="$(expr $VALORDAY + 1)"
 BACKUPS="$USER"
-HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
-HOST=$(hostname -f)
-BACKUPPATH=/opt/BKSITES
-DATE=$(date +"%T"."%d-%m-%Y")
-SITELIST=$(ls -1L /var/www -I22222 -Ihtml)
-SITE_PATH=/var/www
+

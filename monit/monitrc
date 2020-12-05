@@ -1,0 +1,36 @@
+#Configuração global do monit
+set daemon  60
+set log /var/log/monit.log
+set idfile /var/.monit.id
+set statefile /var/.monit.state
+
+
+set eventqueue
+     basedir /var/monit  # set the base directory where events will be stored
+     slots 1000           # optionally limit the queue size
+
+
+set mail-format {
+from:    Monit <monit@$HOST>
+subject: Alerta de Monitoramento
+message: $EVENT Serviço $SERVICE
+Data: $DATE
+Ação: $ACTION
+Host: $HOST
+Descrição: $DESCRIPTION
+
+Serviço De Monitoramento,
+
+Monit.
+}
+#set mailserver smtp.gmail.com port 587
+#username "email" password "senha"
+#using tls with timeout 30 seconds
+#set alert emailalert
+
+
+set httpd port 2812 and
+    allow localhost
+
+include /etc/monit/conf-enable/*
+#

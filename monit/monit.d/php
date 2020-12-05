@@ -1,0 +1,7 @@
+check process PHP7.4-FPM with pidfile /run/php/php7.4-fpm.pid
+    start program = "/etc/init.d/php7.4-fpm start"
+    stop program  = "/etc/init.d/php7.4-fpm stop"
+    if failed port 9174 type TCP then restart
+	if cpu > 90% for 5 cycles then exec "/usr/local/bin/monit2telegram" else if succeeded then exec "/usr/local/bin/monit2telegram"
+    if cpu > 90% for 5 cycles then exec "wo stack restart" 
+    if 5 restarts within 5 cycles then timeout	
