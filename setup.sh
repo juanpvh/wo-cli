@@ -22,6 +22,4 @@ echo "INSTALANDO WO-CLI.."
 
 echo "Rclone e WO-CLI instalados"
 
-(crontab -l; echo "0 2 * * * bash /usr/local/bin/wo-cli -b >> /var/log/wo-cli.log 2>&1") | crontab -
-
 rm -rf $HOME/setup.sh
