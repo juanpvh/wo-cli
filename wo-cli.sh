@@ -8,13 +8,15 @@
 # Copyright (c) 2019 ServicoDigital <contato@servicodigital.com.br>
 # This script is licensed under M.I.T
 # -------------------------------------------------------------------------
-# Version 1.0 - 2019-07-26
+# Version 2.1 - 18-01-2022
 # -------------------------------------------------------------------------
 
-###subindo variaveis
-source /usr/local/bin/wo-cli-var
+###variaveis
 
-###var
+VALORDAY=29
+DAYSKEEP="$(expr $VALORDAY + 1)"
+BACKUPS_DIR=
+
 
 HOSTCLONE=$(tail /root/.config/rclone/rclone.conf | head -n 1 | sed 's/.$//; s/.//')
 HOST=$(hostname -f)
@@ -37,6 +39,7 @@ echo "Usage: wo-cli (ARGUMENTS...)
 	-c <site name>  : Restaura um site
 	-d              : Restaura todos os sites.
 	-e              : Configura wo-cli
+	-f              : Deletando Backups Antigos
 	-i              : Configura o rclone para google-drive # primeira etapa
 	-u              : Update do script.
 	-v              : Version
@@ -47,9 +50,9 @@ exit 1
 #wo-cli config
 _woconfig() {
 	echo -ne "Digite o Nome da Pasta Onde ficara os BackUps: " ; read DIR 
-	sed -i "s/BACKUPS=.*/BACKUPS=$DIR/" /usr/local/bin/wo-cli-var
+	sed -i "s/BACKUPS_DIR=.*/BACKUPS_DIR=$DIR/" /usr/local/bin/wo-cli
 	echo -ne "Digite o valor em dias que ira manter os Backups: " ; read DAYBR 
-	sed -i "s/VALORDAY=.*/VALORDAY=$DAYBR/" /usr/local/bin/wo-cli-var
+	sed -i "s/VALORDAY=.*/VALORDAY=$DAYBR/" /usr/local/bin/wo-cli
 }
 
 #Config rclone
@@ -71,15 +74,22 @@ fi
 _update() {
 	echo "Fazendo Update do wo-cli..."
 	mv /usr/local/bin/wo-cli /usr/local/bin/wo-cli-old
+	VAR1=$(sed -n "/^BACKUPS_DIR/p" /usr/local/bin/wo-cli-old)
 	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+	sed -i "s/BACKUPS_DIR=.*/$VAR1/" /usr/local/bin/wo-cli
 	chmod +x /usr/local/bin/wo-cli
+	rm -rf /usr/local/bin/wo-cli-old
 	echo "👉  Update Concluido!!! "
 }
 
 #Deletanando arquivos antigos
 old_arquivos() {
 	echo "👉  Deletando arquivos com mais de 30 dias..."
-	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS/$HOST/$SITE/
+for SITE in ${SITELIST[@]}; do
+	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
+	QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
+	echo "Quantidade de Backup SITE: $SITE = $QUANT"
+done
 }
 
 # Backup Single Site.
@@ -105,10 +115,11 @@ backup_single() {
 	rm $SITE_PATH/$SITE/$SITE.sql
 
 	echo "👉  Upando os Arquivos e BD na Nuvem: $SITE..."
-	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS/$HOST/$SITE/
+	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
 
 	#deletando arquivos antigos de backup
-	old_arquivos
+	echo "👉  Deletando arquivos com mais de 30 dias..."
+	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
 	
 	echo "👉  Corrigindo permissoes: $SITE..."		
 	chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
@@ -158,14 +169,15 @@ for SITE in ${SITELIST[@]}; do
 	fi
 
 	echo "👉  Upando os Arquivos e BD na Nuvem: $SITE..."
-	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS/$HOST/$SITE/
+	rclone copy $BACKUPPATH/$SITE/$DATE.$SITE.tar.gz $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
 
 	if [ "$?" -eq "0" ]; then
 	echo "🔥 Sucesso, Arquivo enviado para Nuvem!"
 	fi
 
 	#deletando arquivos antigos de backup
-	old_arquivos
+	echo "👉  Deletando arquivos com mais de 30 dias..."
+	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
 	
 	echo "👉  Corrigindo permissoes: $SITE..."		
 	chown -R www-data:www-data $SITE_PATH/$SITE/htdocs/
@@ -197,12 +209,12 @@ restore_single() {
 	if [ "$INS1" = "y" ]; then
 
 		echo "⚡️  Listando Backups Existentes:"
-		rclone ls  $HOSTCLONE:$BACKUPS/$HOST/$SITE/ | awk '{print $2}'
+		rclone ls  $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | awk '{print $2}'
 
 		echo -ne "Digite o Nome do Backup a ser Restaurado: " ; read -i y REST
 		echo "⚡️  Fazendo Download para Pasta Local..."		
 		rm -rf $BACKUPPATH/$SITE/
-		rclone copy $HOSTCLONE:$BACKUPS/$HOST/$SITE/$REST $BACKUPPATH/$SITE/
+		rclone copy $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/$REST $BACKUPPATH/$SITE/
 
 		echo "⚡️  Download Realizado do site: $SITE ..."
 		echo "⏲  Extraindo o backup..."
@@ -235,10 +247,10 @@ restore_single() {
 
 	else
 		rm -rf $BACKUPPATH/$SITE/
-		ULTIMO=$(rclone ls  $HOSTCLONE:$BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
+		ULTIMO=$(rclone ls  $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
 		
 		echo "⚡️  Fazendo Download para Pasta Local..."
-		rclone copy $HOSTCLONE:$BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
+		rclone copy $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
 		
 		echo "⚡️  Download Realizado do site: $SITE ..."
 		echo "⏲  Removendo os arquivos do site atual..."
@@ -280,10 +292,10 @@ restore_all() {
 for SITE in ${SITELIST[@]}; do
 	echo "⚡️  Iniciando Restauração do site: $SITE ..."
 	rm -rf $BACKUPPATH/$SITE/
-	ULTIMO=$(rclone ls  $HOSTCLONE:$BACKUPS/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
+	ULTIMO=$(rclone ls  $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | head -n 1 | awk '{print $2}')
 	
 	echo "⚡️  Fazendo Download para Pasta Local..."
-	rclone copy $HOSTCLONE:$BACKUPS/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
+	rclone copy $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/$ULTIMO $BACKUPPATH/$SITE/
 		
 	echo "⚡️  Download Realizado do site: $SITE ..."
 	echo "⏲  Removendo os arquivos do site atual..."
@@ -319,7 +331,7 @@ done
 
 ###
 OPTERR=0
-while getopts abcdeiuhv OPTION; do
+while getopts abcdefiuhv OPTION; do
 	###
 	case $OPTION in
 	#executando as funções
@@ -328,10 +340,11 @@ while getopts abcdeiuhv OPTION; do
 	'c') restore_single;;
 	'd') restore_all;;
 	'e') _woconfig;;
+	'f') old_arquivos;;
 	'i') _rcloneconfig;;
 	'h') _help;;
 	'u') _update;;
-	'v') echo "wo-cli 1.1.2 - (C) 2019-2020 juanpvh"; exit 1;;
+	'v') echo "wo-cli version:2.1.0 - (C) 2019-2023 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
 	esac
 done
