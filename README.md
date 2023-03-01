@@ -1,7 +1,5 @@
 # WO-CLI
 
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
-
 Script para backup de sites wordpress que utilização WordOps.
 
 ### Características principais
@@ -11,8 +9,10 @@ Script para backup de sites wordpress que utilização WordOps.
 	-b              : Backup de todos os sites.
 	-c <site name>  : Restaura um site
 	-d              : Restaura todos os sites.
-    -e              : Configura wo-cli
-    -i              : Configura o rclone e wo-cli # primeira etapa
+	-e              : Configura wo-cli
+	-f              : Deletando Backups Antigos
+	-g              : Configura o rclone para google-drive # primeira etapa
+	-i              : Quantidade de backup(s) por site(s)
 	-u              : Update do script.
 	-v              : Version
 	-h              : Mostra as messagens de help."

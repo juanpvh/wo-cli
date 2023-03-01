@@ -9,12 +9,16 @@ echo "INSTALANDO RCLONE..."
 
 echo "INSTALANDO WO-CLI.."
     if [ -e /usr/local/bin/wo-cli ]; then
-		rm -rf /usr/local/bin/wo-cli
-		wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
-		chmod +x /usr/local/bin/wo-cli
-		else
-		wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
-		chmod +x /usr/local/bin/wo-cli
+	    mv /usr/local/bin/wo-cli /usr/local/bin/wo-cli-old
+	    rm -rf /usr/local/bin/wo-cli
+	    VAR1=$(sed -n "/^BACKUPS_DIR/p" /usr/local/bin/wo-cli-old)
+	    wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+	    sed -i "s/BACKUPS_DIR=.*/$VAR1/" /usr/local/bin/wo-cli
+	    chmod +x /usr/local/bin/wo-cli
+	    rm -rf /usr/local/bin/wo-cli-old
+    else
+	    wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
+	    chmod +x /usr/local/bin/wo-cli
 	fi
 
 echo "Rclone e WO-CLI instalados"

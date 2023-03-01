@@ -40,7 +40,8 @@ echo "Usage: wo-cli (ARGUMENTS...)
 	-d              : Restaura todos os sites.
 	-e              : Configura wo-cli
 	-f              : Deletando Backups Antigos
-	-i              : Configura o rclone para google-drive # primeira etapa
+	-g              : Configura o rclone para google-drive # primeira etapa
+	-i              : Quantidade de backup(s) por site(s)
 	-u              : Update do script.
 	-v              : Version
 	-h              : Mostra as messagens de help."
@@ -74,12 +75,13 @@ fi
 _update() {
 	echo "Fazendo Update do wo-cli..."
 	mv /usr/local/bin/wo-cli /usr/local/bin/wo-cli-old
+	rm -rf /usr/local/bin/wo-cli
 	VAR1=$(sed -n "/^BACKUPS_DIR/p" /usr/local/bin/wo-cli-old)
 	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
 	sed -i "s/BACKUPS_DIR=.*/$VAR1/" /usr/local/bin/wo-cli
 	chmod +x /usr/local/bin/wo-cli
 	rm -rf /usr/local/bin/wo-cli-old
-	echo "👉  Update Concluido!!! "
+	echo "👉  Update do wo-cli Concluido!!! "
 }
 
 #Deletanando arquivos antigos
@@ -89,6 +91,15 @@ for SITE in ${SITELIST[@]}; do
 	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
 	QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
 	echo "Quantidade de Backup SITE: $SITE = $QUANT"
+done
+}
+
+#Quantidade de backups por site
+quant_backs() {
+	echo "👉  Quantidade de backups por site..."
+for SITE in ${SITELIST[@]}; do
+	QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
+	echo "Quantidade de Backup(s) SITE(s): $SITE = $QUANT"
 done
 }
 
@@ -341,7 +352,8 @@ while getopts abcdefiuhv OPTION; do
 	'd') restore_all;;
 	'e') _woconfig;;
 	'f') old_arquivos;;
-	'i') _rcloneconfig;;
+	'g') _rcloneconfig;;
+	'i') quant_backs;;
 	'h') _help;;
 	'u') _update;;
 	'v') echo "wo-cli version:2.1.0 - (C) 2019-2023 juanpvh"; exit 1;;
