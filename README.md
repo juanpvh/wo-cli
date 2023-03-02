@@ -42,7 +42,7 @@ $ wo-cli -e
 ```
 Configura o rclone + google drive
 ```sh
-$ wo-cli -i
+$ wo-cli -g
 ```
 
 Informações:

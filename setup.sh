@@ -17,4 +17,4 @@ echo "INSTALANDO WO-CLI.."
 	    chmod +x /usr/local/bin/wo-cli
 	fi
 
-rm -rf $HOME/setup.sh
+
