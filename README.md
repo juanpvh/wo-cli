@@ -55,7 +55,6 @@ Informações:
 ```sh
 $ 0 2 * * * bash /usr/local/bin/wo-cli -b >> /var/log/wo-cli.log 2>&1
 ```
-obs: a regra cron é aplicada na instalação
 
 ### Todos
 
