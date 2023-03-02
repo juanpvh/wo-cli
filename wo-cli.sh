@@ -78,7 +78,8 @@ _update() {
 	rm -rf /usr/local/bin/wo-cli
 	VAR1=$(sed -n "/^BACKUPS_DIR/p" /usr/local/bin/wo-cli-old)
 	wget -O /usr/local/bin/wo-cli https://raw.githubusercontent.com/juanpvh/wo-cli/master/wo-cli.sh
-	sed -i "s/BACKUPS_DIR=.*/$VAR1/" /usr/local/bin/wo-cli
+#	sed -i "s/BACKUPS_DIR=.*/$VAR1/" /usr/local/bin/wo-cli
+	sed -i "/BACKUPS_DIR=.*/{ s/BACKUPS_DIR=.*/$VAR1/;:a;n;ba }" /usr/local/bin/wo-cli
 	chmod +x /usr/local/bin/wo-cli
 	rm -rf /usr/local/bin/wo-cli-old
 	echo "👉  Update do wo-cli Concluido!!! "
@@ -98,8 +99,8 @@ done
 quant_backs() {
 	echo "👉  Quantidade de backups por site..."
 for SITE in ${SITELIST[@]}; do
-	QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
-	echo "Quantidade de Backup(s) SITE(s): $SITE = $QUANT"
+    QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
+    echo "$QUANT = $SITE"
 done
 }
 
