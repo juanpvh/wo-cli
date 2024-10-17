@@ -8,7 +8,7 @@
 # Copyright (c) 2019 ServicoDigital <contato@servicodigital.com.br>
 # This script is licensed under M.I.T
 # -------------------------------------------------------------------------
-# Version 2.1 - 18-01-2022
+# Version 2.3.0 - 17-10-2024
 # -------------------------------------------------------------------------
 
 ###variaveis
@@ -42,10 +42,63 @@ echo "Usage: wo-cli (ARGUMENTS...)
 	-f              : Deletando Backups Antigos
 	-g              : Configura o rclone para google-drive # primeira etapa
 	-i              : Quantidade de backup(s) por site(s)
+	-j              : Quantidade de hits por url, salvo no backup 
 	-u              : Update do script.
 	-v              : Version
-	-h              : Mostra as messagens de help."
+	-h              : Mostra as messagens de help.
+	Lista de templates: tb_noticias tb_saude tb_adulto tb_tecnologia"
 exit 1
+}
+
+_restore_template() {
+    echo "Restaurando template"
+    
+    # Verificar se foram fornecidos os argumentos necessários
+    if [ $# -ne 2 ]; then
+        echo "Uso: wo-cli -l <dominio> <template_backup>"
+        exit 1
+    fi
+
+    DOMINIO=$1
+    TEMPLATE=$2
+    TEMPLATE_DIR="/opt/BKSITES/TEMPLATE"
+    
+    # Criar diretório para o template se não existir
+    mkdir -p $TEMPLATE_DIR
+
+    echo "Baixando template $TEMPLATE do Google Drive..."
+	rclone copy $HOSTCLONE:$BACKUPS_DIR/TEMPLATE/$TEMPLATE.tar.gz $TEMPLATE_DIR/
+
+    if [ ! -f "$TEMPLATE_DIR/$TEMPLATE.tar.gz" ]; then
+        echo "Erro: Template $TEMPLATE não encontrado no Google Drive."
+        exit 1
+    fi
+
+    echo "Extraindo template..."
+    tar -xzf $TEMPLATE_DIR/$TEMPLATE.tar.gz -C $TEMPLATE_DIR
+
+	echo "Limpando arquivos da pasta htdocs..."
+	rm -rf $SITE_PATH/$DOMINIO/htdocs/*
+
+    echo "Restaurando template para o domínio $DOMINIO..."
+    rsync -azh --delete $TEMPLATE_DIR/htdocs/* $SITE_PATH/$DOMINIO/htdocs/
+
+    echo "Atualizando URLs no banco de dados..."
+    wp search-replace "http://template.com" "https://$DOMINIO" --path=$SITE_PATH/$DOMINIO/htdocs --all-tables --allow-root
+    wp search-replace "https://template.com" "https://$DOMINIO" --path=$SITE_PATH/$DOMINIO/htdocs --all-tables --allow-root
+
+	echo "Atualizando wordpress..."
+	wp core update --path=$SITE_PATH/$DOMINIO/htdocs --allow-root
+
+    echo "Corrigindo permissões..."
+    chown -R www-data:www-data $SITE_PATH/$DOMINIO/htdocs/
+    find $SITE_PATH/$DOMINIO/htdocs/ -type f -exec chmod 644 {} \;
+    find $SITE_PATH/$DOMINIO/htdocs/ -type d -exec chmod 755 {} \;
+
+    echo "Limpando diretório temporário..."
+    rm -rf $TEMPLATE_DIR
+
+    echo "Template $TEMPLATE restaurado com sucesso para o domínio $DOMINIO!"
 }
 
 #wo-cli config
@@ -87,7 +140,7 @@ _update() {
 
 #Deletanando arquivos antigos
 old_arquivos() {
-	echo "👉  Deletando arquivos com mais de 30 dias..."
+	echo "👉  Deletando arquivos com mais de $DAYSKEEP dias..."
 for SITE in ${SITELIST[@]}; do
 	rclone --min-age "$DAYSKEEP"d --drive-use-trash=false delete $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/
 	QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
@@ -102,6 +155,59 @@ for SITE in ${SITELIST[@]}; do
     QUANT=$(rclone ls $HOSTCLONE:$BACKUPS_DIR/$HOST/$SITE/ | wc -l)
     echo "$QUANT = $SITE"
 done
+}
+
+_access() {
+
+
+rm -rf $HOME/sites/ $HOME/posts $HOME/listposts.txt
+
+mkdir -p $HOME/posts/
+mkdir -p $HOME/sites/
+
+for SITE in ${SITELIST[@]}; do
+	wp post list --post_type=page,post  --field=url --path=/var/www/$SITE/htdocs --allow-root > $HOME/sites/$SITE
+	sed -i "/$SITE/ s/https\:\/\/$SITE//g" $HOME/sites/$SITE
+	sed -i "/$SITE/ s/http\:\/\/$SITE//g" $HOME/sites/$SITE
+done
+
+LIST=$(ls -1 $HOME/sites/)
+
+for lista in ${LIST[@]}; do
+	cat $HOME/sites/$lista >> listposts.txt
+done 
+
+LS=$(cat listposts.txt)
+
+for SITE in ${SITELIST[@]}; do
+for pos in ${LS[@]}; do
+mkdir -p $HOME/posts/$SITE
+VAR=$(grep -c  $pos /var/log/nginx/$SITE.access.log)
+echo "$VAR --  $pos "  >> $HOME/posts/$SITE/$SITE.list1.log.txt
+sed -i "/^0/d" $HOME/posts/$SITE/$SITE.list1.log.txt
+done
+done
+
+
+
+for SITE in ${SITELIST[@]}; do
+for pos in ${LS[@]}; do
+mkdir -p $HOME/posts/$SITE
+VAR=$(grep -c  $pos /var/log/nginx/$SITE.access.log.1)
+echo "$VAR --  $pos "  >> $HOME/posts/$SITE/$SITE.list1.log1.txt
+sed -i "/^0/d" $HOME/posts/$SITE/$SITE.list1.log1.txt
+done
+done
+
+
+for SITE in ${SITELIST[@]}; do
+	cat $HOME/posts/$SITE/$SITE.list1.log.txt | sort | uniq | sort -nr > $HOME/posts/$SITE/$SITE.GERAL.log.txt
+    cat $HOME/posts/$SITE/$SITE.list1.log1.txt | sort | uniq | sort -nr >> $HOME/posts/$SITE/$SITE.GERAL.log.txt 
+    awk 'BEGIN{FS=OFS=" -- "}; {a[$2]+=$1}; END{for (b in a){print a[b],  b}}'  $HOME/posts/$SITE/$SITE.GERAL.log.txt | sort | uniq | sort -nr > $HOME/posts/$SITE/$SITE.log.txt
+    rclone copy $HOME/posts/$SITE/$SITE.log.txt $HOSTCLONE:$BACKUPS_DIR/HITS/$SITE/
+done
+
+rm -rf $HOME/sites/ $HOME/posts $HOME/listposts.txt
 }
 
 # Backup Single Site.
@@ -343,7 +449,7 @@ done
 
 ###
 OPTERR=0
-while getopts abcdefiuhv OPTION; do
+while getopts abcdefghijhluv OPTION; do
 	###
 	case $OPTION in
 	#executando as funções
@@ -354,10 +460,12 @@ while getopts abcdefiuhv OPTION; do
 	'e') _woconfig;;
 	'f') old_arquivos;;
 	'g') _rcloneconfig;;
-	'i') quant_backs;;
 	'h') _help;;
+	'i') quant_backs;;
+	'j') _access;;
 	'u') _update;;
-	'v') echo "wo-cli version:2.1.0 - (C) 2019-2023 juanpvh"; exit 1;;
+	'l') _restore_template $2 $3;;
+	'v') echo "wo-cli version:2.3.0 - (C) 2019-2024 juanpvh"; exit 1;;
 	'?') _help; exit 1;;
 	esac
 done
